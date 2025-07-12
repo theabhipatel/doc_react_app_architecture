@@ -68,50 +68,72 @@ src/
 ### Nested Route Structure Example
 
 ```js
-// routes/settings.routes.js
-import SettingsLayout from "../pages/settings/SettingsLayout";
-import SettingsIndex from "../pages/settings/index";
-import Account from "../pages/settings/account/index";
-import History from "../pages/settings/account/preferences/password/history/index";
+// routes/routes.tsx
+import AppLayout from "@/layouts/AppLayout";
+import Dashboard from "@/pages/dashboard/Dashboard";
+import Invoices from "@/pages/invoices/Invoices";
+import NotFound from "@/pages/notFound/NotFound";
+import type { ReactElement } from "react";
+import { Navigate } from "react-router";
 
-const settingsRoutes = [
+export interface IRouteConfig {
+  path?: string;
+  element: ReactElement;
+  index?: boolean;
+  children?: IRouteConfig[];
+}
+
+export const routes: IRouteConfig[] = [
   {
-    path: "/settings",
-    element: <SettingsLayout />,
+    path: "/",
+    element: <AppLayout />,
     children: [
-      { index: true, element: <SettingsIndex /> },
       {
-        path: "account",
-        element: <Account />,
-        children: [
-          {
-            path: "preferences/password/history",
-            element: <History />,
-          },
-        ],
+        index: true,
+        element: <Navigate to="dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "invoices",
+        element: <Invoices />,
       },
     ],
   },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
 ];
+
 ```
 
 ### Recursive Route Renderer
 
 ```js
-// routes/AppRoutes.jsx
-import { Routes, Route } from "react-router-dom";
-import allRoutes from "./allRoutes";
+// routes/AppRouter.tsx
+import { Routes, Route } from "react-router";
+import { routes, type IRouteConfig } from "./routes";
 
-const renderRoutes = (routes) =>
-  routes.map(({ path, element, children }, index) => (
-    <Route key={index} path={path} element={element}>
-      {children && renderRoutes(children)}
-    </Route>
-  ));
+const renderRoutes = (routes: IRouteConfig[]): React.ReactNode =>
+  routes.map(({ path, element, index, children }, key) => {
+    if (index) {
+      return <Route key={`index-${key}`} index element={element} />;
+    }
+    return (
+      <Route key={`path-${key}`} path={path} element={element}>
+        {children && renderRoutes(children)}
+      </Route>
+    );
+  });
 
-export default function AppRoutes() {
-  return <Routes>{renderRoutes(allRoutes)}</Routes>;
-}
+const AppRouter = () => {
+  return <Routes>{renderRoutes(routes)}</Routes>;
+};
+
+export default AppRouter;
 ```
 
 ---
